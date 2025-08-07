@@ -54,6 +54,26 @@ require("lazy").setup({
       event = "LspAttach", 
       opts = {}, -- required, even if empty
     },
+    {
+      -- more languages
+  "neovim/nvim-lspconfig",
+  config = function()
+    local lspconfig = require('lspconfig')
+    
+    -- Configure the LSPs for prettier formatting
+    -- add in html and other LSPs
+    -- For HTML, CSS, JSON
+    -- npm install -g vscode-langservers-extracted
+    -- # For JavaScript/TypeScript  
+    -- npm install -g typescript-language-server typescript
+    -- # For general formatting (includes prettier)
+    -- npm install -g @fsouza/prettierd
+    lspconfig.html.setup{}
+    lspconfig.cssls.setup{}
+    lspconfig.jsonls.setup{}
+    lspconfig.ts_ls.setup{}
+  end,
+}
   },
   -- Configure any other settings here. See the documentation for more details.
   -- colorscheme that will be used when installing plugins.
@@ -88,6 +108,23 @@ vim.api.nvim_create_autocmd("BufWritePre", {
   end,
 })
 
+-- Enable automatic reading of files when changed outside of Vim
+vim.opt.autoread = true
+
+-- Trigger autoread when files change on disk
+vim.api.nvim_create_autocmd({'FocusGained', 'BufEnter', 'CursorHold', 'CursorHoldI'}, {
+  pattern = '*',
+  command = "if mode() !~ '\\v(c|r.?|!|t)' && getcmdwintype() == '' | checktime | endif",
+})
+
+-- Notification after file change
+vim.api.nvim_create_autocmd('FileChangedShellPost', {
+  pattern = '*',
+  callback = function()
+    vim.api.nvim_echo({{'File changed on disk. Buffer reloaded.', 'WarningMsg'}}, true, {})
+  end,
+})
+
 -- Custom keybindings
 vim.keymap.set('n', '<C-p>', ':FzfLua git_files<CR>', { noremap = true, silent = true }) -- file browser
 vim.keymap.set('n', '<C-n>', ':bprevious<CR>', { noremap = true, silent = true }) -- previous buffer
@@ -99,3 +136,4 @@ vim.keymap.set('n', '<Leader>e', vim.diagnostic.open_float, { noremap = true, si
 vim.keymap.set('n', '[d', vim.diagnostic.goto_prev, { noremap = true, silent = true, desc = 'Previous diagnostic' })
 vim.keymap.set('n', ']d', vim.diagnostic.goto_next, { noremap = true, silent = true, desc = 'Next diagnostic' })
 
+require('latex-config')
