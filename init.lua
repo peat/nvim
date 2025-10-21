@@ -29,7 +29,6 @@ vim.opt.incsearch = true
 vim.opt.hlsearch = true
 vim.opt.number = true
 vim.opt.scrolloff = 5
-vim.opt.syntax = "enable"
 vim.opt.linebreak = true -- break on words, not characters
 
 -- Setup lazy.nvim
@@ -54,26 +53,6 @@ require("lazy").setup({
       event = "LspAttach", 
       opts = {}, -- required, even if empty
     },
-    {
-      -- more languages
-  "neovim/nvim-lspconfig",
-  config = function()
-    local lspconfig = require('lspconfig')
-    
-    -- Configure the LSPs for prettier formatting
-    -- add in html and other LSPs
-    -- For HTML, CSS, JSON
-    -- npm install -g vscode-langservers-extracted
-    -- # For JavaScript/TypeScript  
-    -- npm install -g typescript-language-server typescript
-    -- # For general formatting (includes prettier)
-    -- npm install -g @fsouza/prettierd
-    lspconfig.html.setup{}
-    lspconfig.cssls.setup{}
-    lspconfig.jsonls.setup{}
-    lspconfig.ts_ls.setup{}
-  end,
-}
   },
   -- Configure any other settings here. See the documentation for more details.
   -- colorscheme that will be used when installing plugins.
@@ -82,6 +61,22 @@ require("lazy").setup({
   checker = { enabled = true },
 })
 
+-- Native LSP setup with custom configs
+vim.lsp.config.html = {} -- Use the config from nvim-lspconfig
+vim.lsp.config.cssls = {}
+vim.lsp.config.jsonls = {}
+vim.lsp.config.ts_ls = { -- Updated to use the new ts_ls name
+  settings = {
+    javascript = {
+      updateImportsOnFileMove = { enabled = "always" },
+    },
+    typescript = {
+      updateImportsOnFileMove = { enabled = "always" },
+    },
+  },
+}
+vim.lsp.enable({ "html", "cssls", "jsonls", "ts_ls" })
+
 
 -- Alright, now we're getting into configuration town!
 vim.cmd.colorscheme "catppuccin"
@@ -89,13 +84,11 @@ vim.cmd.colorscheme "catppuccin"
 -- Lualine
 require('lualine').setup {
   tabline = {
-    lualine_a = {'buffers'}
-  },
-  tabline_buffers_highlight = {
-    active = {
-      bg = '#FFFF00', -- Yellow background
-      fg = '#000000', -- Black text for contrast
-      gui = 'bold'
+    lualine_a = {
+      {
+        'buffers',
+        use_mode_colors = true, -- Automatically match buffer colors to current mode
+      }
     }
   }
 }
@@ -126,7 +119,9 @@ vim.api.nvim_create_autocmd('FileChangedShellPost', {
 })
 
 -- Custom keybindings
-vim.keymap.set('n', '<C-p>', ':FzfLua git_files<CR>', { noremap = true, silent = true }) -- file browser
+vim.keymap.set('n', '<C-p>', function()
+  require('fzf-lua').git_files({ cwd = vim.fn.getcwd() })
+end, { noremap = true, silent = true }) -- file browser restricted to current working directory
 vim.keymap.set('n', '<C-n>', ':bprevious<CR>', { noremap = true, silent = true }) -- previous buffer
 vim.keymap.set('n', '<C-m>', ':bnext<CR>', { noremap = true, silent = true }) -- next buffer
 vim.keymap.set('n', '<C-w>', ':bdelete<CR>', { noremap = true, silent = true }) -- close buffer
